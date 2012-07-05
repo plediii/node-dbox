@@ -5,3 +5,4 @@ test/config/access_token.json
 tmp
 *.swp
 *.*~
+config.js
