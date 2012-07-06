@@ -156,12 +156,18 @@ SessionStore.prototype.get_session = function (name, cb) {
     };
     
     return fs.exists(token_file_name, function (exists) {
+	var creds;
 	if (exists) {
 	    fs.readFile(token_file_name, 'utf8', function (err, data) {
 		if (err) {
 		    throw err;
 		}
-		creds = JSON.parse(data);
+		try {
+		    creds = JSON.parse(data);
+		}
+		catch (err) {
+		    creds = new Creds();
+		}
 		cb(new Session(creds, store.app, new filestore.FileStore(), store_session));
 	    });
 	}
@@ -201,4 +207,3 @@ var example = function () {
 
 };
 
-example();
