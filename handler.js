@@ -87,10 +87,17 @@ Session.prototype.synch = function (login_required, linked) {
 Session.prototype.get_list = function (dropbox_path, login_required, linked) {
     var sess = this;
     this.synch(login_required, function () {
-	sess.synch(login_required, function () {
-	    linked(sess.file_store.get_list(dropbox_path));
-	});
+	linked(sess.file_store.get_list(dropbox_path));
     });  
+};
+
+Session.prototype.get_metadata = function (dropbox_path, login_required, linked) {
+
+    var sess = this;
+    this.synch(login_required, function () {
+	linked(sess.file_store.get_metadata(dropbox_path));
+    });  
+
 };
 
 Session.prototype.link = function (login_required, linked) {
@@ -130,6 +137,10 @@ Session.prototype.link = function (login_required, linked) {
     }
 };    
     
+Session.prototype.set_synch_path = function (cb, target_path) {
+    return this.file_store.set_synch_path(cb, target_path);
+}
+
 
 var SessionStore = function (app) {
     if (!app) {
@@ -137,12 +148,20 @@ var SessionStore = function (app) {
 	app = dbox.app(require('./config').dropbox);
     }
     this.app = app;
+    this.session_cache = {};
 };
 
 SessionStore.prototype.get_session = function (name, cb) {
     if (!name) {
 	name = '';
     }
+    var session_cache = this.session_cache;
+    
+    if (session_cache.hasOwnProperty(name)) {
+	cb(session_cache[name]);
+	return;
+    }
+
     var token_file_name = 'token_store_' + name + '.json';
 
     var store = this;
@@ -168,11 +187,13 @@ SessionStore.prototype.get_session = function (name, cb) {
 		catch (err) {
 		    creds = new Creds();
 		}
-		cb(new Session(creds, store.app, new filestore.FileStore(), store_session));
+		var session = session_cache[name] = new Session(creds, store.app, new filestore.FileStore(), store_session);
+		cb(session);
 	    });
 	}
 	else {
-	    cb(new Session(new Creds(), store.app, new filestore.FileStore(), store_session));
+	    var session = session_cache[name] = new Session(new Creds(), store.app, new filestore.FileStore(), store_session);
+	    cb(session);
 	}
     });
 };
