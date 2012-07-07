@@ -138,7 +138,28 @@ Session.prototype.link = function (login_required, linked) {
 };    
     
 Session.prototype.set_synch_path = function (cb, target_path) {
-    return this.file_store.set_synch_path(cb, target_path);
+    var session = this;
+    return sess.file_store.set_synch_path(function (target_path, created) {
+	if (!created) {
+	    return cb(target_path);
+	}
+	else {
+	    var skip_login = function () {
+		if (cb) {
+		    cb(target_path);
+		}
+	    };
+
+	    return sess.link(skip_login, function (sess) {
+		sess.file_store.reset();
+		sess.synch(skip_login, function () {
+		    if (cb) {
+			cb();
+		    }
+		});
+	    });
+	};
+    }, target_path);
 }
 
 

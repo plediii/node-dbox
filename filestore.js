@@ -132,20 +132,32 @@ var FileStore = function (metadata_store) {
 FileStore.prototype.set_synch_path = function (cb, target_path) {
 
     if (!this.target_path) {
-	console.log("whole new synch path");
 	if (target_path) {
 	    this.target_path = target_path;
-	    if (cb) {
-		cb(this.target_path);
-	    }
-	    return;
+	    return fs.exists(target_path, function (exists) {
+		if (!exists) {
+		    return fs.mkdir(target_path, function (err) {
+			if (err) {
+			    throw err;
+			}
+			if (cb) {
+			    cb(target_path, true);
+			}
+		    });
+		}
+		else {
+		    if (cb) {
+			cb(target_path, true);
+		    }
+		}
+	    });
 	}
 	else {
 	    var file_store = this;
 	    temp.mkdir('node-dbox', function (err, dirPath) {
 		file_store.target_path = dirPath;
 		if (cb) {
-		    cb(file_store.target_path);
+		    cb(file_store.target_path, true);
 		}
 	    });
 
@@ -163,14 +175,14 @@ FileStore.prototype.set_synch_path = function (cb, target_path) {
 		}
 
 		if (cb) {
-		    cb(target_path);
+		    cb(target_path, false);
 		}
 	    })
 	}
 	else {
 	    console.log('actually doing nothing');
 	    // nothing to actually do
-	    cb(this.target_path);
+	    cb(this.target_path, false);
 	}
     }
 };
