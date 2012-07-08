@@ -33,7 +33,7 @@ var get_parent_path = function (dropboxpath) {
 };
 
 MetadataStore.prototype.get = function (path) {
-    return this.metadata[name];
+    return this.metadata[path];
 };
 
 MetadataStore.prototype.get_list = function (path) {

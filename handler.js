@@ -1,7 +1,8 @@
 
 
 var fs = require('fs');
-// var filestore = require('./filestore');
+var temp = require('temp');
+var filestore = require('./filestore');
 var app = require('./dbox').app;
 var creds = require('./creds');
 
@@ -27,13 +28,27 @@ var SessionStore = function (options) {
     else {
 	this.credstore = new creds.CredStore();
     }
+    this.filestore_creator = options.filestore_creator;
 
     this.session_cache = {};
+};
+
+exports.local_filestore_creator = function (name, cb) {
+    return temp.mkdir('node-dbox', function (err, dirPath) {
+	if (err) {
+	    throw err;
+	}
+	var newstore = new filestore.FileStore(dirPath);
+	if (cb) {
+	    cb(newstore);
+	}
+    });
 };
 
 SessionStore.prototype.new_session = function (name) {
     return new session.Session(name, {
 	credstore: this.credstore,
+	filestore_creator: this.filestore_creator,
 	app: this.app,
     });
 };
@@ -77,7 +92,7 @@ exports.creds = creds;
 
 var example = function () {
 
-    var store = new SessionStore();
+    var store = new SessionStore({filestore_creator: exports.local_filestore_creator});
 
     var login_required = function (login_url) {
 	console.log('Need to log in: ' + login_url);
@@ -94,4 +109,3 @@ var example = function () {
     });
 };
 
-example();

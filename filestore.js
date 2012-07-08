@@ -3,73 +3,12 @@ var path = require('path');
 var temp = require('temp');
 var fs = require('fs');
 
-var FileStore = function (metadata_store) {
+var child_process = require('child_process');
+
+var FileStore = function (target_path) {
     this.cursor = null;
 
-    if (!metadata_store) {
-	metadata_store = new MetaDataStore();
-    }
-
-    this.target_path = null;
-    this.all_metadata = metadata_store;
-};
-
-FileStore.prototype.set_synch_path = function (cb, target_path) {
-
-    if (!this.target_path) {
-	if (target_path) {
-	    this.target_path = target_path;
-	    return fs.exists(target_path, function (exists) {
-		if (!exists) {
-		    return fs.mkdir(target_path, function (err) {
-			if (err) {
-			    throw err;
-			}
-			if (cb) {
-			    cb(target_path, true);
-			}
-		    });
-		}
-		else {
-		    if (cb) {
-			cb(target_path, true);
-		    }
-		}
-	    });
-	}
-	else {
-	    var file_store = this;
-	    temp.mkdir('node-dbox', function (err, dirPath) {
-		file_store.target_path = dirPath;
-		if (cb) {
-		    cb(file_store.target_path, true);
-		}
-	    });
-
-	    return;
-	}
-    }
-    else {
-	console.log('replacing old target_path');
-	if (target_path) {
-	    var oldpath = this.target_path;
-	    this.target_path = target_path;
-	    fs.rename(oldpath, target_path, function (err) {
-		if (err) {
-		    throw err;
-		}
-
-		if (cb) {
-		    cb(target_path, false);
-		}
-	    })
-	}
-	else {
-	    console.log('actually doing nothing');
-	    // nothing to actually do
-	    cb(this.target_path, false);
-	}
-    }
+    this.target_path = target_path;
 };
 
 FileStore.prototype.local_path = function (dropbox_path) {
@@ -100,42 +39,28 @@ FileStore.prototype.local_to_dropbox_path = function (local_path) {
     //     return metadata
 
 
-FileStore.prototype.add_file = function (client, dropboxpath, metadata, cb) {
-    console.log('FileStore.add_file: ' + dropboxpath);
-    console.log('target_path = ' + this.target_path);
-    this.all_metadata.add_file(dropboxpath, metadata);
-
-    if (this.target_path) {
-	var local_path = this.local_path(dropboxpath);
-	if (metadata.is_dir) {
-	    return fs.mkdir(local_path, function (err) {
-		if (err) {
-		    throw err;
-		}
-		if (cb) {
-		    cb();
-		}
-	    });
+var err_or_cb = function (cb) {
+    return function (err)  {
+	if (err) {
+	    throw err;
 	}
-	else {
-	    console.log('downloading content');
-	    client.get(dropboxpath, function (status, buf, meta) {
-		console.log('writing downloaded content to ' + local_path);
-		fs.writeFile(local_path, buf, function (err) {
-		    if (err) {
-			throw err;
-		    }
-		    if (cb) {
-			cb();
-		    }
-		});
-	    });
+	if (cb) {
+	    return cb();
 	}
     }
+};
+
+
+FileStore.prototype.add_file = function (client, dropboxpath, metadata, cb) {
+    
+    var local_path = this.local_path(dropboxpath);
+    if (metadata.is_dir) {
+	return fs.mkdir(local_path, err_or_cb(cb));
+    }
     else {
-	if (cb) {
-	    cb();
-	}
+	return client.get(dropboxpath, function (status, buf, meta) {
+	    return fs.writeFile(local_path, buf, err_or_cb(cb));
+	});
     }
 };
 
@@ -145,39 +70,15 @@ FileStore.prototype.rm_file = function (dropboxpath, cb) {
 	var local_path = this.local_path(oldmeta.path);
 
 	if (oldmeta.is_dir) {
-	    return fs.rmdir(local_path, function (err) {
-		if (err) {
-		    throw err;
-		}
-		if (cb) {
-		    cb();
-		}
-	    });
+	    return fs.rmdir(local_path, err_or_cb(cb));
 	}
 	else {
-	    return fs.unlink(local_path, function (err) {
-		if (err) {
-		    throw err;
-		}
-		if (cb) {
-		    cb();
-		}
-	    });
+	    return fs.unlink(local_path, err_or_cb(cb));
 	}
     }
     else {
-	if (cb) {
-	    cb();
-	}
+	return (err_or_cb(cb))();
     }
-};
-
-FileStore.prototype.get_list = function (dropboxpath) {
-    return this.all_metadata.get_list(dropboxpath);
-};
-
-FileStore.prototype.get_metadata = function (dropboxpath) {
-    return this.all_metadata.allfiles[dropboxpath];
 };
 
     // def get_contents(self, dropboxpath):
@@ -188,15 +89,22 @@ FileStore.prototype.get_metadata = function (dropboxpath) {
     //         raise NotExist(dropboxpath)
 
 
-FileStore.prototype.reset = function () {
-    this.all_metadata.reset();
-    this.cursor = null;
-    
-        // target_path = self.target_path
-        // if os.path.exists(target_path):
-        //     shutil.rmtree(target_path)
-        // os.mkdir(target_path)
+FileStore.prototype.reset = function (cb) {
+    var target_path = this.target_path;
+    return child_process.exec('rm -fr ' + target_path, 
+		       function (err, stdout, stderr) {
+			   if (err) {
+			       throw err;
+			   }
+			   return fs.mkdir(target_path, function (err) {
+			       if (err) {
+				   throw err;
+			       }
+			       if (cb) {
+				   cb();
+			       }
+			   });
+		       });
 };
 
 exports.FileStore = FileStore;
-exports.MetaDataStore = MetaDataStore;
