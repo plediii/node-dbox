@@ -31,6 +31,13 @@ var SessionStore = function (options) {
     this.session_cache = {};
 };
 
+SessionStore.prototype.new_session = function (name) {
+    return new session.Session(name, {
+	credstore: this.credstore,
+	app: this.app,
+    });
+};
+
 SessionStore.prototype.get = function (name, cb) {
     var sessStore = this;
     if (!name) {
@@ -55,10 +62,7 @@ SessionStore.prototype.get = function (name, cb) {
     };
 
     var newSession = function () {
-	var sess = new session.Session(name, {
-	    credstore: sessStore.credstore,
-	    app: sessStore.app,
-	});
+	var sess = sessStore.new_session(name);;
 
 	return setSession(sess);
     };
