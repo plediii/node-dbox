@@ -32,6 +32,8 @@ var get_parent_path = function (dropboxpath) {
     }
 };
 
+exports.get_parent_path = get_parent_path;
+
 MetadataStore.prototype.get = function (path) {
     return this.metadata[path];
 };

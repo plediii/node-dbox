@@ -1,6 +1,10 @@
 
 var creds = require('./creds');
-var MetadataStore = require('./metadatastore').MetadataStore;
+var metadatastore = require('./metadatastore');
+var MetadataStore = metadatastore.MetadataStore;
+
+
+exports.get_parent_path = metadatastore.get_parent_path;
 
 var Session = function (name, options) {
     if (!options) {
@@ -44,7 +48,7 @@ Session.prototype.linked = function (login_required, when_linked) {
 	if (!sess.client) {
 	    sess.client = sess.app.createClient(sess.creds.access);
 	}
-	if (!sess.filesstore && sess.filestore_creator) {
+	if (!sess.filestore && sess.filestore_creator) {
 	    return sess.filestore_creator(sess.name, function (filestore) {
 		sess.filestore = filestore;
 		return when_linked(sess);

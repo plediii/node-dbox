@@ -17,6 +17,20 @@ FileStore.prototype.local_path = function (dropbox_path) {
     }
     var local_path = path.join(this.target_path, dropbox_path);
     return local_path;
+};
+
+FileStore.prototype.split_local_path = function (dropbox_path) {
+    var local_path = this.local_path(dropbox_path);
+    var b = local_path.lastIndexOf('/');
+
+    if (b < 0) {
+	return null;
+    }
+    else {
+	var parent = local_path.substr(0, b+1);
+	var file = local_path.substr(b+1);
+	return [parent, file];
+    }
 }
 
 FileStore.prototype.local_to_dropbox_path = function (local_path) {
