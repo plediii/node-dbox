@@ -94,6 +94,38 @@ Session.prototype.linked = function (login_required, when_linked) {
 
 };
 
+Session.prototype.add_file = function (path, meta, cb) {
+    console.log('add meta ');
+    console.log(meta);
+    this.metadata.add_file(meta.path, meta);
+    if (this.filestore) {
+	return this.filestore.add_file(this.client, path, meta,
+				       cb);
+    }
+    else {
+	return cb();
+    }
+};
+
+Session.prototype.file_url = function (path, cb) {
+    this.client.media(path, function (err, body) {
+	if (err != 200){
+	    throw 'err = ' + err;
+	}
+	cb(body);
+    });
+};
+
+Session.prototype.rm_file = function (path, cb) {
+    this.metadata.rm_file(path);
+    if (this.filestore) {
+	return this.filestore.rm_file(path, cb);
+    }
+    else {
+	return cb();
+    }
+};
+
 Session.prototype.synched = function (login_required, when_synched) {
     var sess = this;
     this.linked(login_required, function (sess) {
@@ -136,21 +168,11 @@ Session.prototype.synched = function (login_required, when_synched) {
 
 
 		if (meta) {
-		    sess.metadata.add_file(meta.path, meta);
-		    if (filestore) {
-			return filestore.add_file(client, path, meta,
-					   synch_loop);
-		    }
+		    return sess.add_file(path, meta, synch_loop);
 		}
 		else {
-		    sess.metadata.rm_file(metadata.path);
-		    if (filestore) {
-			return filestore.rm_file_path(path, 
-					      synch_loop);
-		    }
-		    
+		    return sess.rm_file(path, synch_loop);
 		}
-		return synch_loop();
 	    };
 
 
@@ -178,3 +200,15 @@ Session.prototype.get_list = function (dropbox_path) {
 Session.prototype.get_metadata = function (dropbox_path) {
     return this.metadata.get(dropbox_path);
 };
+
+
+Session.prototype.put = function (path, body, cb) {
+    var sess = this;
+    this.client.put(path, body, function (err, meta) {
+	if (err != 200) {
+	    throw 'err = ' + err;
+	}
+	sess.add_file(path, meta);
+	cb(meta);
+    });
+}
