@@ -3,7 +3,6 @@ var creds = require('./creds');
 var metadatastore = require('./metadatastore');
 var MetadataStore = metadatastore.MetadataStore;
 
-
 exports.get_parent_path = metadatastore.get_parent_path;
 
 var Session = function (name, options) {
@@ -35,7 +34,7 @@ Session.prototype.linked = function (login_required, when_linked) {
     var sess = this;
     
     var go_login = function () {
-	return sess.app.request_token(function (status, request_token) {
+	return sess.app.requesttoken(function (status, request_token) {
 	    sess.creds.request = request_token;
 	    if (sess.credstore) {
 		sess.credstore.store(sess.name, sess.creds);
@@ -46,7 +45,7 @@ Session.prototype.linked = function (login_required, when_linked) {
 
     var go_linked = function () {
 	if (!sess.client) {
-	    sess.client = sess.app.createClient(sess.creds.access);
+	    sess.client = sess.app.client(sess.creds.access);
 	}
 	if (!sess.filestore && sess.filestore_creator) {
 	    return sess.filestore_creator(sess.name, function (filestore) {
@@ -65,7 +64,7 @@ Session.prototype.linked = function (login_required, when_linked) {
 		return go_linked();
 	    }
 
-	    return sess.app.access_token(sess.creds.request, function (status, access_token) {
+	    return sess.app.accesstoken(sess.creds.request, function (status, access_token) {
 		if (status !== 200) {
 		    return go_login();
 		}
