@@ -94,8 +94,6 @@ Session.prototype.linked = function (login_required, when_linked) {
 };
 
 Session.prototype.add_file = function (path, meta, cb) {
-    console.log('add meta ');
-    console.log(meta);
     this.metadata.add_file(meta.path, meta);
     if (this.filestore) {
 	return this.filestore.add_file(this.client, path, meta,

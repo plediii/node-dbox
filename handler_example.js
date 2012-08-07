@@ -3,7 +3,7 @@ var handler = require('./handler');
 
 var example = function () {
 
-    var store = new handler.SessionStore({filestore_creator: exports.local_filestore_creator});
+    var store = new handler.SessionStore({filestore_creator: handler.local_filestore_creator});
 
     var login_required = function (login_url) {
 	console.log('Need to log in: ' + login_url);

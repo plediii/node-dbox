@@ -2,7 +2,7 @@
 
 var fs = require('fs');
 var temp = require('temp');
-var filestore = require('./filestore');
+var local_filestore = require('./local_filestore');
 var app = require('./dbox').app;
 var creds = require('./creds');
 
@@ -33,15 +33,17 @@ var SessionStore = function (options) {
     this.session_cache = {};
 };
 
-exports.local_filestore_creator = function (name, cb) {
+exports.local_filestore_creator = function (name, perms, cb) {
+    if (!cb) {
+	cb = perms;
+	perms = {};
+    }
+
     return temp.mkdir('node-dbox', function (err, dirPath) {
 	if (err) {
 	    throw err;
 	}
-	var newstore = new filestore.FileStore(dirPath);
-	if (cb) {
-	    cb(newstore);
-	}
+	cb(new local_filestore.FileStore(dirPath, perms));
     });
 };
 
