@@ -76,33 +76,9 @@ FileStore.prototype.add_file = function (client, dropboxpath, metadata, cb) {
 	return fs.mkdir(local_path, err_or_cb(cb));
     }
     else {
-
-	var writeFile = function (status, buf, meta) {
-	    var nextcb = cb;
-	    
-	    if (perms && perms.hasOwnProperty('owner')) {
-		nextcb = fixOwner;
-	    }
-	    else if (perms && perms.hasOwnProperty('perms')) {
-		nextcb = fixPerms;
-	    }
-
-	    return fs.writeFile(local_path, buf, err_or_cb(nextcb));
-	}
-
-	var fixOwner = function () {
-	    var nextcb = cb;
-	    if (perms && perms.hasOwnProperty('perms')) {
-		nextcb = fixPerms;
-	    }
-	    return fs.chown(local_path, perms.owner.uid, perms.owner.gid, nextcb);
-	};
-
-	var fixPerms = function () {
-	    return fs.chmod(local_path, perms.perms, cb);
-	};
-
-	return client.get(dropboxpath, writeFile);
+	return client.get(dropboxpath, function (status, buf, meta) {
+	    return fs.writeFile(local_path, buf, err_or_cb(cb));
+	});
     }
 };
 
