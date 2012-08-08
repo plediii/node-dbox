@@ -113,7 +113,7 @@ FileStore.prototype.reset = function (cb) {
 		return mk_target();
 	    }
 
-	    return;
+	    return cb();
 	});
 };
 
