@@ -8,16 +8,8 @@ var creds = require('./creds');
 var session = require('./session');
 
 var default_session_factory = function (name, options) {
-    var filestore = null;
-    if (options.filestore_factory) {
-	filestore = options.filestore_factory(name);
-    }
 
-    return new session.Session(name, {
-	    credstore: options.credstore,
-	    app: options.app,
-	    filestore: filestore
-	});
+    return new session.Session(name, options);
 };
 
 var SessionStore = function (options) {
