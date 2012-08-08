@@ -6,4 +6,4 @@ tmp
 *.swp
 *.*~
 config.js
-token_store_.json
+token_store_*.json
