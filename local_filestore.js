@@ -14,30 +14,31 @@ var FileStore = function (target_path) {
     this.target_path = target_path; // if falsy, a temporary directory will be made.
 };
 
-FileStore.prototype.local_path = function (dropbox_path) {
+var local_path = exports.local_path = function (dropbox_path, target_path) {
     if (dropbox_path !== '' && dropbox_path[0] === '/') {
 	dropbox_path = dropbox_path.substr(1);
     }
-    var local_path = path.join(this.target_path, dropbox_path);
+
+    var local_path = path.join(target_path, dropbox_path);
     return local_path;
 };
 
-FileStore.prototype.split_local_path = function (dropbox_path) {
-    var local_path = this.local_path(dropbox_path);
-    var b = local_path.lastIndexOf('/');
+var split_local_path = exports.split_local_path = function (dropbox_path, target_path) {
+    var file_path = local_path(dropbox_path, target_path);
+    var b = file_path.lastIndexOf('/');
 
     if (b < 0) {
 	return null;
     }
     else {
-	var parent = local_path.substr(0, b+1);
-	var file = local_path.substr(b+1);
+	var parent = file_path.substr(0, b+1);
+	var file = file_path.substr(b+1);
 	return [parent, file];
     }
 };
 
-FileStore.prototype.local_to_dropbox_path = function (local_path) {
-    return path.relative(this.target_path, local_path);
+var local_to_dropbox_path = exports.local_to_dropbox_path = function (local_path, target_path) {
+    return path.relative(target_path, local_path);
 };
 
     // def create_file(self, client, dropbox_path, current_path):
@@ -58,19 +59,20 @@ FileStore.prototype.local_to_dropbox_path = function (local_path) {
 FileStore.prototype.add_file = function (client, dropboxpath, metadata, cb) {
     var fileStore = this;
     var perms = fileStore.perms;
-    var local_path = this.local_path(dropboxpath);
+
+    var file_path = local_path(dropboxpath, this.target_path);
+
     if (metadata.is_dir) {
-	return fs.mkdir(local_path, cb);
+	return fs.mkdir(file_path, cb);
     }
     else {
 	return client.get(dropboxpath, function (status, buf, meta) {
-	    return fs.writeFile(local_path, buf, cb);
+	    return fs.writeFile(file_path, buf, cb);
 	});
     }
 };
 
 FileStore.prototype.rm_file = function (dropboxpath, cb) {
-    var local_path = this.local_path(oldmeta.path);
 
     // Leave the file there.
 
