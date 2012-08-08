@@ -3,13 +3,14 @@ var path = require('path');
 var temp = require('temp');
 var fs = require('fs');
 
-var child_process = require('child_process');
-
 exports.tmp_filestore = function (name) {
     return new FileStore();
 };
 
 var FileStore = function (target_path) {
+    // A write-only filestore.  Files can be created and overwritten
+    // in the target_path.
+
     this.target_path = target_path; // if falsy, a temporary directory will be made.
 };
 
@@ -71,18 +72,9 @@ FileStore.prototype.add_file = function (client, dropboxpath, metadata, cb) {
 FileStore.prototype.rm_file = function (dropboxpath, cb) {
     var local_path = this.local_path(oldmeta.path);
 
-    return fs.exists(local_path, function (exists) {
-	    if (!exists) {
-		return cb();
-	    }
-	    child_process.exec('rm -fr ' + local_path, 
-			       function (err, stdout, stderr) {
-				   if (err) {
-				       return cb(stderr);
-				   }
-				   return cb();
-			       });
-	});
+    // Leave the file there.
+
+    return cb();
 };
 
     // def get_contents(self, dropboxpath):
@@ -119,13 +111,7 @@ FileStore.prototype.reset = function (cb) {
 		return mk_target();
 	    }
 
-	    return child_process.exec('rm -fr ' + target_path, 
-				      function (err, stdout, stderr) {
-					  if (err) {
-					      return cb(err);
-					  }
-					  return mk_target();
-				      });
+	    return;
 	});
 };
 
