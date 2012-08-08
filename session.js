@@ -53,7 +53,6 @@ Session.prototype.linked = function (login_required, when_linked) {
 	return when_linked(sess);
     };
 
-    sess = this;
     var link_creds = function () {
 	
 	if (sess.creds.request) {
