@@ -5,13 +5,12 @@ var fs = require('fs');
 
 var child_process = require('child_process');
 
-var FileStore = function (target_path, perms) {
-    if (!perms) {
-	perms = {};
-    }
-    this.perms = perms;
-    this.cursor = null;
-    this.target_path = target_path;
+exports.anonymous_filestore = function (name) {
+    return new FileStore();
+};
+
+var FileStore = function (target_path) {
+    this.target_path = target_path; // if falsy, a temporary directory will be made.
 };
 
 FileStore.prototype.local_path = function (dropbox_path) {
@@ -55,48 +54,35 @@ FileStore.prototype.local_to_dropbox_path = function (local_path) {
         
     //     return metadata
 
-
-var err_or_cb = function (cb) {
-    return function (err)  {
-	if (err) {
-	    throw err;
-	}
-	if (cb) {
-	    return cb();
-	}
-    }
-};
-
-
 FileStore.prototype.add_file = function (client, dropboxpath, metadata, cb) {
     var fileStore = this;
     var perms = fileStore.perms;
     var local_path = this.local_path(dropboxpath);
     if (metadata.is_dir) {
-	return fs.mkdir(local_path, err_or_cb(cb));
+	return fs.mkdir(local_path, cb);
     }
     else {
 	return client.get(dropboxpath, function (status, buf, meta) {
-	    return fs.writeFile(local_path, buf, err_or_cb(cb));
+	    return fs.writeFile(local_path, buf, cb);
 	});
     }
 };
 
 FileStore.prototype.rm_file = function (dropboxpath, cb) {
-    var oldmeta = this.all_metadata.rm_file(dropboxpath);
-    if (oldmeta) {
-	var local_path = this.local_path(oldmeta.path);
+    var local_path = this.local_path(oldmeta.path);
 
-	if (oldmeta.is_dir) {
-	    return fs.rmdir(local_path, err_or_cb(cb));
-	}
-	else {
-	    return fs.unlink(local_path, err_or_cb(cb));
-	}
-    }
-    else {
-	return (err_or_cb(cb))();
-    }
+    return fs.exists(local_path, function (exists) {
+	    if (!exists) {
+		return cb();
+	    }
+	    child_process.exec('rm -fr ' + local_path, 
+			       function (err, stdout, stderr) {
+				   if (err) {
+				       return cb(stderr);
+				   }
+				   return cb();
+			       });
+	});
 };
 
     // def get_contents(self, dropboxpath):
@@ -108,21 +94,39 @@ FileStore.prototype.rm_file = function (dropboxpath, cb) {
 
 
 FileStore.prototype.reset = function (cb) {
-    var target_path = this.target_path;
-    return child_process.exec('rm -fr ' + target_path, 
-		       function (err, stdout, stderr) {
-			   if (err) {
-			       throw err;
-			   }
-			   return fs.mkdir(target_path, function (err) {
-			       if (err) {
-				   throw err;
-			       }
-			       if (cb) {
-				   cb();
-			       }
-			   });
-		       });
+    // ensure target_directory exists and is empty
+    var filestore = this;
+    var target_path = filestore.target_path;
+
+    var mk_target = function () {
+	if (!filestore.target_path) {
+	    return temp.mkdir('node-dbox', function (err, dirPath) {
+		    filestore.target_path = dirPath;
+		    return cb();
+		});
+	}
+	return fs.mkdir(target_path, function (err) {
+		cb(err);
+	    });
+    };
+
+    if (!target_path) {
+	return mk_target();
+    }
+
+    return fs.exists(target_path, function (exists) {
+	    if (!exists) {
+		return mk_target();
+	    }
+
+	    return child_process.exec('rm -fr ' + target_path, 
+				      function (err, stdout, stderr) {
+					  if (err) {
+					      return cb(err);
+					  }
+					  return mk_target();
+				      });
+	});
 };
 
 exports.FileStore = FileStore;

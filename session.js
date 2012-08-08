@@ -22,7 +22,6 @@ var Session = function (name, options) {
     this.client = null;
     this.app = options.app;
     this.filestore = options.filestore;
-    this.filestore_creator = options.filestore_creator;
 
     this.metadata_cursor = null;
     this.metadata = new MetadataStore();
@@ -46,12 +45,6 @@ Session.prototype.linked = function (login_required, when_linked) {
     var go_linked = function () {
 	if (!sess.client) {
 	    sess.client = sess.app.client(sess.creds.access);
-	}
-	if (!sess.filestore && sess.filestore_creator) {
-	    return sess.filestore_creator(sess.name, function (filestore) {
-		sess.filestore = filestore;
-		return when_linked(sess);
-	    });
 	}
 	return when_linked(sess);
     };
