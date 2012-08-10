@@ -48,7 +48,9 @@ Session.prototype.linked = function (login_required, when_linked) {
 	    sess.client = sess.app.client(sess.creds.access);
 	}
 	if (!sess.filestore) {
-	    sess.filestore = sess.filestore_factory(sess.name);
+	    if (sess.filestore_factory) {
+		sess.filestore = sess.filestore_factory(sess.name);
+	    }
 	}
 	return when_linked(sess);
     };

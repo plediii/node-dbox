@@ -8,7 +8,6 @@ var creds = require('./creds');
 var session = require('./session');
 
 var default_session_factory = function (name, options) {
-
     return new session.Session(name, options);
 };
 
