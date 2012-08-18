@@ -512,6 +512,12 @@ exports.app = function(config){
 	  }
 
 	  return go_login();
+	},
+
+	unlink: function (){
+	  client = null;
+	  creds.set(accessField, null);
+	  creds.set(requestField, null);
 	}
       };
     }
