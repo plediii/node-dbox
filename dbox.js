@@ -12,6 +12,10 @@ var set_args = function (options, args) {
   return options;
 };
 
+var requestField = exports.requestField = 'request';
+var accessField = exports.accessField = 'access';
+
+
 exports.app = function(config){
 
   var sign = oauth(config.app_key, config.app_secret)
@@ -470,8 +474,59 @@ exports.app = function(config){
           })
         }
       }
+    },
+
+    session: function (creds){
+      var app = this;
+
+      var client = null;
+
+      return {
+	link: function (login_required, with_link){
+
+	  var sess = this;
+
+	  var go_client = function (){
+	    return with_link(client);
+	  };
+
+	  if (client){
+	    return go_client();
+	  }
+
+	  var go_new_client = function (){
+	    client = app.client(creds.get(accessField));
+	    return go_client();
+	  };
+
+	  if (creds.get(accessField)){
+	    return go_new_client();
+	  }
+
+	  var go_login = function (){
+	    return app.requesttoken(function (status, requesttoken) {
+	      creds.set(requestField, requesttoken);
+	      return login_required(requesttoken.authorize_url);
+	    });
+	  };
+
+	  var go_get_access = function () {
+	    return app.accesstoken(creds.get(requestField), function (status, accesstoken) {
+	      if (status != 200) {
+	        return go_login();
+	      }
+	      creds.set(accessField, accesstoken);
+	      return go_new_client();
+	    });
+	  };
+
+	  if (creds.get(requestField)) {
+	    return go_get_access();
+	  }
+
+	  return go_login();
+	}
+      };
     }
-  } 
-
+  };
 }
-
