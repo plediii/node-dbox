@@ -12,13 +12,6 @@ var folder = exports.folder = function (client, data) {
 	metadata = {};
     }
 
-    var get_delta = function (on_delta) {
-	return process.nextTick(function () {
-		client.delta({cursor: this.cursor},
-			     on_delta);
-	    });
-    };
-
     return {
 	synched:  function (when_synched, options) {
 	    if (!options) {
@@ -27,6 +20,12 @@ var folder = exports.folder = function (client, data) {
 
 	    var on_delta;
 	    var that = this;
+
+	    var get_delta = function (on_delta) {
+		return client.delta({cursor: this.cursor},
+				    on_delta);
+	    };
+
 
 	    on_delta = function (status, delta) {
 		if (status !== 200) {
