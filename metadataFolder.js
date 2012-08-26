@@ -13,11 +13,8 @@ var folder = exports.folder = function (client, data) {
     }
 
     return {
-	synched:  function (when_synched, options) {
-	    if (!options) {
-		options = {};
-	    }
 
+	synch:  function (options) {
 	    var on_delta;
 	    var that = this;
 
@@ -43,7 +40,9 @@ var folder = exports.folder = function (client, data) {
 		}
 		else {
 		    cb = function () {
-			when_synched(that);
+			if (options.when_synched) {
+			    options.when_synched(that);
+			}
 		    };
 		}
 
@@ -111,6 +110,17 @@ var folder = exports.folder = function (client, data) {
 		return null;
 	    }
 	},
+
+	recursive_list: function (path, cb) {
+	    var meta = this.get(path);
+
+	    cb(meta);
+	    if (meta.is_dir) {
+		for (sub_meta in meta.contents) {
+		    recursive_list(sub_meta.path, cb);
+		}
+	    }
+	}
     };
 };
 
