@@ -459,7 +459,73 @@ exports.app = function(config){
           return request(args, function(e, r, b){
             cb(e ? null : r.statusCode, JSON.parse(b))
           })
-        }
+        },
+
+	deltaCursor: function (cursor, options) {
+
+	    var cli = this;
+
+	    var nop = function () {};
+	    var defaults = {
+		add: nop,
+		remove: nop,
+		reset: nop,
+		finished: nop
+	    };
+
+	    for (attr in defaults) {
+		if (!(attr in options)) {
+		    options[attr] = defaults[attr];
+		}
+	    }
+
+	    var finished = function () {
+		options.finished(cursor);
+	    };
+
+
+	    (function delta_loop () {
+		return cli.delta({cursor: cursor}, function (status, delta) {
+			if (status !== 200) {
+			    throw {
+				name: 'error',
+				message: 'delta returned status ' + status
+			    };
+			}
+			
+			cursor = delta.cursor;
+
+			if (delta.reset) {
+			    options.onReset();
+			}
+			
+			var cb;
+
+			var delta_list = delta.entries;
+			delta_list.reverse();
+
+			for (deltaIdx in delta_list) {
+			    var path_meta = delta_list[deltaIdx];
+			    var path = path_meta[0];
+			    var meta = path_meta[1];
+			    
+			    if (meta) {
+				options.add(meta);
+			    }
+			    else {
+				options.remove(metadata[path]);
+			    }
+			}
+
+			if (delta.has_more) {
+			    return delta_loop();
+			}
+			else {
+			    return finished();
+			}
+		    });
+		})();
+	    },
       }
     },
 
