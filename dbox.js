@@ -496,7 +496,7 @@ exports.app = function(config){
 			cursor = delta.cursor;
 
 			if (delta.reset) {
-			    options.onReset();
+			    options.reset();
 			}
 			
 			var cb;
@@ -513,7 +513,7 @@ exports.app = function(config){
 				options.add(meta);
 			    }
 			    else {
-				options.remove(metadata[path]);
+				options.remove(path);
 			    }
 			}
 
@@ -535,7 +535,7 @@ exports.app = function(config){
       var client = null;
 
       return {
-	link: function (login_required, with_link){
+	linkedClient: function (login_required, with_link){
 
 	  var sess = this;
 
