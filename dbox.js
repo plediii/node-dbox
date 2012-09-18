@@ -544,7 +544,7 @@ exports.app = function(config){
       var client = null;
 
       return {
-	linkedClient: function (login_required, with_link) {
+	  linkedClient: function (login_required, with_link, onErr) {
 
 	  var sess = this;
 
@@ -561,7 +561,10 @@ exports.app = function(config){
 	      return go_client();
 	  };
 
-	  return creds.getAccessToken(function (accessToken) {
+	  return creds.getAccessToken(function (accessToken, err) {
+		  if (err) {
+		      return onErr(err);
+		  }
 		  if (accessToken) {
 		      return go_new_client(accessToken);
 		  }
@@ -571,21 +574,25 @@ exports.app = function(config){
 			  return app.requesttoken(function (status, requestToken) {
 				  creds.setRequestToken(requestToken, function (err) {
 					  if (err) {
-					      throw {
-						  name: 'error',
-						  message: 'when setting access token, returned error '+ err
-					      }
+					      return onErr('when setting access token, returned error '+ err);
 					  }
 					  return login_required(requestToken.authorize_url);
 				      });
 			      });
 		      };
 
-		      creds.getRequestToken(function (requestToken) {
+		      creds.getRequestToken(function (requestToken, err) {
+			      if (err) {
+				  return onErr('getRequestToken returned ' + err);
+			      }
 			      if (requestToken) {
 				  return app.accesstoken(requestToken, function (status, accessToken) {
-					  console.log("requst => access = ");
-					  console.log(accessToken);
+
+					  // is there an error status
+					  // which would suggest we
+					  // shouldn't just get a new
+					  // request token?
+
 					  if (status != 200) {
 					      return go_login();
 					  }
@@ -602,10 +609,18 @@ exports.app = function(config){
 	  });
 	},
 
-	unlink: function (cb){
+	unlink: function (cb) {
 	  client = null;
-	  return creds.setAccessToken(null, function () {
-		  creds.setRequestToken(null, cb);
+	  return creds.setAccessToken(null, function (err) {
+		  if (err) {
+		      return cb('setAccessToken returned ' + err);
+		  }
+		  creds.setRequestToken(null, function (err) {
+			  if (err) {
+			      return cb('setRequestToken returned ' + err);
+			  }
+			  return cb(null);
+		      });
 	      });
 	}
       };

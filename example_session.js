@@ -23,6 +23,10 @@ var tf = require("./textFile");
 	console.log('Please log in by visiting ' + login_url);
     };
 
+    var onErr = function (err) {
+	console.log('Session link returned err: ' + err);
+    };
+
 
     // Create a context in which we have a linked client.
     dbox.app(require('./config').dropbox).session(creds).linkedClient(login_required, example_use);

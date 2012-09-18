@@ -20,16 +20,16 @@ exports.credentials = function (data) {
     return {
 	get: function (key, cb) {
 	    if (key in data) {
-		return cb(data[key]);
+		return cb(data[key], null);
 	    }
 	    else {
-		return cb(null);
+		return cb(null, null);
 	    }
 	},
 
 	set: function (key, value, cb) {
 	    if (key in data && value === data[key]) {
-		return cb(value);
+		return cb(null);
 	    }
 	    data[key] = value;
 	    return fs.writeFile(credsFile, JSON.stringify(data), cb);
