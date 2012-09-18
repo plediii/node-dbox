@@ -18,21 +18,40 @@ exports.credentials = function (data) {
     }
 
     return {
-	get: function (key) {
+	get: function (key, cb) {
 	    if (key in data) {
-		return data[key];
+		return cb(data[key]);
 	    }
 	    else {
-		return null;
+		return cb(null);
 	    }
 	},
 
-	set: function (key, value) {
+	set: function (key, value, cb) {
 	    if (key in data && value === data[key]) {
-		return;
+		return cb(value);
 	    }
 	    data[key] = value;
-	    fs.writeFileSync(credsFile, JSON.stringify(data));
-	}
+	    return fs.writeFile(credsFile, JSON.stringify(data), cb);
+	},
+
+	getRequestToken: function (cb) {
+	    this.get('request', cb);
+	},
+
+	setRequestToken: function (token, cb) {
+	    this.set('request', token, cb);
+	},
+
+
+	getAccessToken: function (cb) {
+	    this.get('access', cb);
+	},
+
+	setAccessToken: function (token, cb) {
+	    this.set('access', token, cb);
+	},
+
+
     };
 };
