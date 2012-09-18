@@ -582,8 +582,6 @@ exports.app = function(config){
 		      };
 
 		      creds.getRequestToken(function (requestToken) {
-			      console.log('request token = ');
-			      console.log(requestToken);
 			      if (requestToken) {
 				  return app.accesstoken(requestToken, function (status, accessToken) {
 					  console.log("requst => access = ");
