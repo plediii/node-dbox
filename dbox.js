@@ -12,10 +12,6 @@ var set_args = function (options, args) {
   return options;
 };
 
-var requestField = exports.requestField = 'request';
-var accessField = exports.accessField = 'access';
-
-
 exports.app = function(config){
 
   var sign = oauth(config.app_key, config.app_secret)
@@ -535,7 +531,7 @@ exports.app = function(config){
       var client = null;
 
       return {
-	linkedClient: function (login_required, with_link){
+	linkedClient: function (login_required, with_link) {
 
 	  var sess = this;
 
@@ -547,43 +543,53 @@ exports.app = function(config){
 	    return go_client();
 	  }
 
-	  var go_new_client = function (){
-	    client = app.client(creds.get(accessField));
-	    return go_client();
+	  var go_new_client = function (accessToken) {
+	      client = app.client(accessToken);
+	      return go_client();
 	  };
 
-	  if (creds.get(accessField)){
-	    return go_new_client();
-	  }
+	  return creds.getAccessToken(function (accessToken) {
+		  if (accessToken) {
+		      return go_new_client(accessToken);
+		  }
+		  else {
+		      
+		      var go_login = function (){
+			  return app.requesttoken(function (status, requesttoken) {
+				  creds.setRequestToken(requestToken, function (err) {
+					  if (err) {
+					      throw {
+						  name: 'error',
+						  message: 'when setting access token, returned error '+ err
+					      }
+					  }
+					  return login_required(requesttoken.authorize_url);
+				      });
+			      });
+		      };
 
-	  var go_login = function (){
-	    return app.requesttoken(function (status, requesttoken) {
-	      creds.set(requestField, requesttoken);
-	      return login_required(requesttoken.authorize_url);
-	    });
-	  };
-
-	  var go_get_access = function () {
-	    return app.accesstoken(creds.get(requestField), function (status, accesstoken) {
-	      if (status != 200) {
-	        return go_login();
-	      }
-	      creds.set(accessField, accesstoken);
-	      return go_new_client();
-	    });
-	  };
-
-	  if (creds.get(requestField)) {
-	    return go_get_access();
-	  }
-
-	  return go_login();
+		      creds.getRequestToken(function (requestToken) {
+			      if (requestToken) {
+				  return app.accesstoken(requestToken, function (status, accessToken) {
+					  if (status != 200) {
+					      return go_login();
+					  }
+					  return creds.setAccessToken(accessToken, go_new_client());
+				      });
+			      }
+			      else {
+				  return go_login();
+			      }
+			  });
+		  }
+	  });
 	},
 
-	unlink: function (){
+	unlink: function (cb){
 	  client = null;
-	  creds.set(accessField, null);
-	  creds.set(requestField, null);
+	  return creds.setAccessToken(null, function () {
+		  creds.setRequestToken(null, cb);
+	      });
 	}
       };
     }
