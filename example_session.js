@@ -11,10 +11,10 @@ var tf = require("./textFile");
 	// function with a linked client.
 	console.log('Files in dropbox:');
 	cli.metadata('/', function (err, meta) {
-		for (idx in meta.contents) {
-		    console.log(meta.contents[idx].path);
-		}
-	    });
+	    for (idx in meta.contents) {
+		console.log(meta.contents[idx].path);
+	    }
+	});
     };
 
     var login_required = function (login_url) {

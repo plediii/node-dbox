@@ -538,92 +538,92 @@ exports.app = function(config){
       }
     },
 
-    session: function (creds){
-      var app = this;
+      session: function (creds){
+	  var app = this;
 
-      var client = null;
+	  var client = null;
 
-      return {
-	  linkedClient: function (login_required, with_link, onErr) {
+	  return {
+	      linkedClient: function (login_required, with_link, onErr) {
 
-	  var sess = this;
+		  var sess = this;
 
-	  var go_client = function (){
-	    return with_link(client);
-	  };
+		  var go_client = function (){
+		      return with_link(client);
+		  };
 
-	  if (client){
-	    return go_client();
-	  }
-
-	  var go_new_client = function (accessToken) {
-	      client = app.client(accessToken);
-	      return go_client();
-	  };
-
-	  return creds.getAccessToken(function (accessToken, err) {
-		  if (err) {
-		      return onErr(err);
+		  if (client){
+		      return go_client();
 		  }
-		  if (accessToken) {
-		      return go_new_client(accessToken);
-		  }
-		  else {
-		      
-		      var go_login = function (){
-			  return app.requesttoken(function (status, requestToken) {
+
+		  var go_new_client = function (accessToken) {
+		      client = app.client(accessToken);
+		      return go_client();
+		  };
+
+		  return creds.getAccessToken(function (accessToken, err) {
+		      if (err) {
+			  return onErr(err);
+		      }
+		      if (accessToken) {
+			  return go_new_client(accessToken);
+		      }
+		      else {
+			  
+			  var go_login = function (){
+			      return app.requesttoken(function (status, requestToken) {
 				  creds.setRequestToken(requestToken, function (err) {
-					  if (err) {
-					      return onErr('when setting access token, returned error '+ err);
-					  }
-					  return login_required(requestToken.authorize_url);
-				      });
+				      if (err) {
+					  return onErr('when setting access token, returned error '+ err);
+				      }
+				      return login_required(requestToken.authorize_url);
+				  });
 			      });
-		      };
+			  };
 
-		      creds.getRequestToken(function (requestToken, err) {
+			  creds.getRequestToken(function (requestToken, err) {
 			      if (err) {
 				  return onErr('getRequestToken returned ' + err);
 			      }
 			      if (requestToken) {
 				  return app.accesstoken(requestToken, function (status, accessToken) {
 
-					  // is there an error status
-					  // which would suggest we
-					  // shouldn't just get a new
-					  // request token?
+				      // is there an error status
+				      // which would suggest we
+				      // shouldn't just get a new
+				      // request token?
 
-					  if (status != 200) {
-					      return go_login();
-					  }
-					  return creds.setAccessToken(accessToken, function () {
-						  go_new_client(accessToken);
-					      });
+				      if (status != 200) {
+					  return go_login();
+				      }
+				      return creds.setAccessToken(accessToken, function () {
+					  go_new_client(accessToken);
 				      });
+				  });
 			      }
 			      else {
 				  return go_login();
 			      }
 			  });
-		  }
-	  });
-	},
+		      }
+		  });
+	      },
 
-	unlink: function (cb) {
-	  client = null;
-	  return creds.setAccessToken(null, function (err) {
-		  if (err) {
-		      return cb('setAccessToken returned ' + err);
-		  }
-		  creds.setRequestToken(null, function (err) {
+	      unlink: function (cb) {
+		  client = null;
+		  return creds.setAccessToken(null, function (err) {
+		      if (err) {
+			  return cb('setAccessToken returned ' + err);
+		      }
+		      creds.setRequestToken(null, function (err) {
 			  if (err) {
 			      return cb('setRequestToken returned ' + err);
 			  }
 			  return cb(null);
 		      });
-	      });
-	}
-      };
-    }
+		  });
+	      }
+	  };
+      }
   };
 }
