@@ -544,9 +544,15 @@ exports.app = function(config){
 	  var client = null;
 
 	  return {
-	      linkedClient: function (login_required, with_link, onErr) {
+	      linkedClient: function (login_required, with_link, on_err) {
 
 		  var sess = this;
+
+		  if (!on_err) {
+		      on_err = function () {
+			  return;
+		      }
+		  }
 
 		  var go_client = function (){
 		      return with_link(client);
@@ -563,7 +569,7 @@ exports.app = function(config){
 
 		  return creds.getAccessToken(function (accessToken, err) {
 		      if (err) {
-			  return onErr(err);
+			  return on_err(err);
 		      }
 		      if (accessToken) {
 			  return go_new_client(accessToken);
@@ -574,7 +580,7 @@ exports.app = function(config){
 			      return app.requesttoken(function (status, requestToken) {
 				  creds.setRequestToken(requestToken, function (err) {
 				      if (err) {
-					  return onErr('when setting access token, returned error '+ err);
+					  return on_err('when setting access token, returned error '+ err);
 				      }
 				      return login_required(requestToken.authorize_url);
 				  });
@@ -583,7 +589,7 @@ exports.app = function(config){
 
 			  creds.getRequestToken(function (requestToken, err) {
 			      if (err) {
-				  return onErr('getRequestToken returned ' + err);
+				  return on_err('getRequestToken returned ' + err);
 			      }
 			      if (requestToken) {
 				  return app.accesstoken(requestToken, function (status, accessToken) {
