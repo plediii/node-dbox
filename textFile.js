@@ -20,10 +20,10 @@ exports.credentials = function (data) {
     return {
 	get: function (key, cb) {
 	    if (key in data) {
-		return cb(data[key], null);
+		return cb(data[key]);
 	    }
 	    else {
-		return cb(null, null);
+		return cb(null);
 	    }
 	},
 
@@ -33,6 +33,10 @@ exports.credentials = function (data) {
 	    }
 	    data[key] = value;
 	    return fs.writeFile(credsFile, JSON.stringify(data), cb);
+	},
+
+	getJSON: function (cb) {
+	    return cb(data);
 	},
 
 	getRequestToken: function (cb) {
