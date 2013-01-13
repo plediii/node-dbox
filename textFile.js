@@ -4,58 +4,32 @@
 
 var fs = require('fs');
 
-var credsFile = 'token_store.json';
+var inherits = require('util').inherits;
+var dbox = require('./dbox');
 
-exports.credentials = function (data) {
-    if (!data) {
-	try {
-	    // read old credentials from file if possible.
-	    data = JSON.parse(fs.readFileSync(credsFile));
-	}
-	catch (e){
-	    data = {};
-	}
+var Credentials = exports.Credentials = function (credsFile) {
+    if (!credsFile) {
+	credsFile = 'token_store.json';	
+    }
+    
+    try {
+	// read old credentials from file if possible.
+	fileData = JSON.parse(fs.readFileSync(credsFile));
+    }
+    catch (e){
+	fileData = {};
     }
 
-    return {
+    dbox.Credentials.call(this, fileData, {
 	get: function (key, cb) {
-	    if (key in data) {
-		return cb(data[key]);
-	    }
-	    else {
-		return cb(null);
-	    }
+	    return cb(null, 'not available');
 	},
 
 	set: function (key, value, cb) {
-	    if (key in data && value === data[key]) {
-		return cb(null);
-	    }
-	    data[key] = value;
-	    return fs.writeFile(credsFile, JSON.stringify(data), cb);
-	},
-
-	getJSON: function (cb) {
-	    return cb(data);
-	},
-
-	getRequestToken: function (cb) {
-	    this.get('request', cb);
-	},
-
-	setRequestToken: function (token, cb) {
-	    this.set('request', token, cb);
-	},
-
-
-	getAccessToken: function (cb) {
-	    this.get('access', cb);
-	},
-
-	setAccessToken: function (token, cb) {
-	    this.set('access', token, cb);
-	},
-
-
-    };
+	    fileData[key] = value;
+	    return fs.writeFile(credsFile, JSON.stringify(fileData), cb);
+	}
+    });
 };
+
+inherits(Credentials, dbox.Credentials);

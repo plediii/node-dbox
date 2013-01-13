@@ -4,7 +4,7 @@ var tf = require("./textFile");
 
 (function example () {
     // Create a credentials facade, 
-    var creds = tf.credentials();
+    var creds = new tf.Credentials();
 
     var example_use = function (cli) {
 	// When logged in to dropbox, session.linkedClient will call this

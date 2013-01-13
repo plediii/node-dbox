@@ -633,3 +633,68 @@ exports.app = function(config){
       }
   };
 }
+
+var Credentials = exports.Credentials = function (data, source) {
+    if (!source) {
+	// no back store for the credentials
+	source = {
+	    get: function (key, cb) {
+		return cb(null, 'no back store provided for Credentials.');
+	    },
+	};
+    }
+    else if (typeof source.get !== 'function') {
+	throw 'source provided to Credentials does not provide the expected get functions.';
+    }
+
+    this.get = function (key, cb) {
+	if (key in data) {
+	    return cb(data[key]);
+	}
+	else {
+	    source.get(key, function (val, err) {
+		return cb(val, err);
+	    });
+	}
+    };
+
+    this.set = function (key, value, cb) {
+	if (key in data && value === data[key]) {
+	    return cb(null);
+	}
+	data[key] = value;
+	if (typeof source.set === 'function') {
+	    return source.set(key, value, cb);
+	}
+    };
+};
+
+Credentials.prototype.getJSON = function (cb) {
+    this.getRequestToken(function (request) {
+	this.getAccessToken(function (access) {
+	    return cb({
+		request: request,
+		access: access
+	    });
+	});
+    });
+};
+
+Credentials.prototype.getRequestToken = function (cb) {
+    this.get('request', cb);
+};
+
+Credentials.prototype.setRequestToken = function (token, cb) {
+    this.set('request', token, cb);
+};
+
+
+Credentials.prototype.getAccessToken = function (cb) {
+    this.get('access', cb);
+};
+
+Credentials.prototype.setAccessToken = function (token, cb) {
+    this.set('access', token, cb);
+};
+
+
