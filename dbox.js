@@ -670,8 +670,9 @@ var Credentials = exports.Credentials = function (data, source) {
 };
 
 Credentials.prototype.getJSON = function (cb) {
-    this.getRequestToken(function (request) {
-	this.getAccessToken(function (access) {
+    var that = this;
+    that.getRequestToken(function (request) {
+	that.getAccessToken(function (access) {
 	    return cb({
 		request: request,
 		access: access
