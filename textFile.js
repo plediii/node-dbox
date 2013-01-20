@@ -7,9 +7,10 @@ var fs = require('fs');
 var inherits = require('util').inherits;
 var dbox = require('./dbox');
 
+var defaultTokenFile = exports.defaultTokenFile = 'token_store.json';
 var Credentials = exports.Credentials = function (credsFile) {
     if (!credsFile) {
-	credsFile = 'token_store.json';	
+	credsFile = defaultTokenFile;	
     }
     
     try {
@@ -22,7 +23,12 @@ var Credentials = exports.Credentials = function (credsFile) {
 
     dbox.Credentials.call(this, fileData, {
 	get: function (key, cb) {
-	    return cb(null, 'not available');
+	    if (fileData.hasOwnProperty(key)) {
+		cb(fileData[key]);
+	    }
+	    else {
+		return cb(null);
+	    }
 	},
 
 	set: function (key, value, cb) {

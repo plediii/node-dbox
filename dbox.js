@@ -546,6 +546,17 @@ exports.app = function(config){
 	  return {
 	      linkedClient: function (login_required, with_link, on_err) {
 
+		  if (typeof login_required !== 'function') {
+		      throw 'login_required function was not provided.';
+		  }
+		  if (typeof with_link !== 'function') {
+		      throw 'with_link function was not provided.';
+		  }
+		  if (typeof on_err !== 'function') {
+		      throw 'on_err function was not provided.';
+		  }
+
+
 		  var sess = this;
 
 		  if (!on_err) {
