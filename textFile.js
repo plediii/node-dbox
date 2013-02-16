@@ -24,7 +24,7 @@ var Credentials = exports.Credentials = function (credsFile) {
     dbox.Credentials.call(this, fileData, {
 	get: function (key, cb) {
 	    if (fileData.hasOwnProperty(key)) {
-		cb(fileData[key]);
+		cb(null, fileData[key]);
 	    }
 	    else {
 		return cb(null);

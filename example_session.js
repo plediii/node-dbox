@@ -24,12 +24,12 @@ var tf = require("./textFile");
     };
 
     var onErr = function (err) {
-	console.log('Session link returned err: ' + err);
+	console.log('Session link returned err: ', err);
     };
 
 
     // Create a context in which we have a linked client.
-    dbox.app(require('./config').dropbox).session(creds).linkedClient(login_required, example_use);
+    dbox.app(require('./config').dropbox).session(creds).linkedClient(login_required, example_use, onErr);
 
 })();
 

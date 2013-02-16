@@ -556,20 +556,13 @@ exports.app = function(config){
 		      on_err = function () {}
 		  }
 
-
 		  var sess = this;
 
-		  if (!on_err) {
-		      on_err = function () {
-			  return;
-		      }
-		  }
-
-		  var go_client = function (){
+		  var go_client = function () {
 		      return with_link(client);
 		  };
 
-		  if (client){
+		  if (client) {
 		      return go_client();
 		  }
 
@@ -578,7 +571,7 @@ exports.app = function(config){
 		      return go_client();
 		  };
 
-		  return creds.getAccessToken(function (accessToken, err) {
+		  return creds.getAccessToken(function (err, accessToken) {
 		      if (err) {
 			  return on_err(err);
 		      }
@@ -587,20 +580,20 @@ exports.app = function(config){
 		      }
 		      else {
 			  
-			  var go_login = function (){
+			  var go_login = function () {
 			      return app.requesttoken(function (status, requestToken) {
 				  creds.setRequestToken(requestToken, function (err) {
 				      if (err) {
-					  return on_err('when setting access token, returned error '+ err);
+					  return on_err(err);
 				      }
 				      return login_required(requestToken.authorize_url);
 				  });
 			      });
 			  };
 
-			  creds.getRequestToken(function (requestToken, err) {
+			  creds.getRequestToken(function (err, requestToken) {
 			      if (err) {
-				  return on_err('getRequestToken returned ' + err);
+				  return on_err(err);
 			      }
 			      if (requestToken) {
 				  return app.accesstoken(requestToken, function (status, accessToken) {
@@ -610,7 +603,7 @@ exports.app = function(config){
 				      // shouldn't just get a new
 				      // request token?
 
-				      if (status != 200) {
+				      if (status !== 200) {
 					  return go_login();
 				      }
 				      return creds.setAccessToken(accessToken, function () {
@@ -651,7 +644,7 @@ var Credentials = exports.Credentials = function (data, source) {
     }
     if (typeof source.get !== 'function') {
 	source.get =  function (key, cb) {
-		return cb(null, 'no back store provided for Credentials.');
+	    return cb('no back store provided for Credentials.', null);
 	}
     }
     if (typeof data === 'string') {
@@ -663,22 +656,22 @@ var Credentials = exports.Credentials = function (data, source) {
     }
 
     this.get = function (key, cb) {
-	if ((data !== null) && (key in data)) {
-	    return cb(data[key]);
+	if ((data !== null) && (data.hasOwnProperty(key))) {
+	    return cb(null, data[key]);
 	}
 	else {
-	    source.get(key, function (val, err) {
+	    source.get(key, function (err, val) {
 		if (data != null) {
 		    data[key] = val;
 		}
-		return cb(val, err);
+		return cb(err, val);
 	    });
 	}
     };
 
     this.set = function (key, value, cb) {
 	if (data !== null) {
-	    if (key in data && value === data[key]) {
+	    if (data.hasOwnProperty(key) && value === data[key]) {
 		return cb(null);
 	    }
 	    data[key] = value;
@@ -694,7 +687,7 @@ Credentials.prototype.getJSON = function (cb) {
     var that = this;
     that.getRequestToken(function (request) {
 	that.getAccessToken(function (access) {
-	    return cb({
+	    return cb(null, {
 		request: request,
 		access: access
 	    });
