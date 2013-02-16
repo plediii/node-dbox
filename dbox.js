@@ -547,13 +547,13 @@ exports.app = function(config){
 	      linkedClient: function (login_required, with_link, on_err) {
 
 		  if (typeof login_required !== 'function') {
-		      throw 'login_required function was not provided.';
+		      login_required = function () {}
 		  }
 		  if (typeof with_link !== 'function') {
-		      throw 'with_link function was not provided.';
+		      with_link = function () {};
 		  }
 		  if (typeof on_err !== 'function') {
-		      throw 'on_err function was not provided.';
+		      on_err = function () {}
 		  }
 
 
@@ -647,33 +647,43 @@ exports.app = function(config){
 
 var Credentials = exports.Credentials = function (data, source) {
     if (!source) {
-	// no back store for the credentials
-	source = {
-	    get: function (key, cb) {
-		return cb(null, 'no back store provided for Credentials.');
-	    },
-	};
+	source = {};
     }
-    else if (typeof source.get !== 'function') {
-	throw 'source provided to Credentials does not provide the expected get functions.';
+    if (typeof source.get !== 'function') {
+	source.get =  function (key, cb) {
+		return cb(null, 'no back store provided for Credentials.');
+	}
+    }
+    if (typeof data === 'string') {
+	data = JSON.parse(data);
+    }
+
+    if (!data || typeof data !== 'object') {
+	throw 'bad credential data';
     }
 
     this.get = function (key, cb) {
-	if (key in data) {
+	if ((data !== null) && (key in data)) {
 	    return cb(data[key]);
 	}
 	else {
 	    source.get(key, function (val, err) {
+		if (data != null) {
+		    data[key] = val;
+		}
 		return cb(val, err);
 	    });
 	}
     };
 
     this.set = function (key, value, cb) {
-	if (key in data && value === data[key]) {
-	    return cb(null);
+	if (data !== null) {
+	    if (key in data && value === data[key]) {
+		return cb(null);
+	    }
+	    data[key] = value;
 	}
-	data[key] = value;
+
 	if (typeof source.set === 'function') {
 	    return source.set(key, value, cb);
 	}
