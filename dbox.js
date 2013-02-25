@@ -684,17 +684,24 @@ var Credentials = exports.Credentials = function (data, source) {
 };
 
 Credentials.prototype.getJSON = function (cb) {
-    console.log('in getJSON function');
     var that = this;
-    that.getRequestToken(function (request) {
-	console.log('request', request);
-	that.getAccessToken(function (access) {
-	    console.log('access', request);
-	    return cb(null, {
-		request: request,
-		access: access
+    that.getRequestToken(function (err, request) {
+	if (err) {
+	    return cb(err);
+	}
+	else {
+	    that.getAccessToken(function (err, access) {
+		if (err) {
+		    return cb(err);
+		}
+		else {
+		    return cb(null, {
+			request: request,
+			access: access
+		    });
+		}
 	    });
-	});
+	}
     });
 };
 
