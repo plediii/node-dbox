@@ -10,7 +10,7 @@ var tf = require("./textFile");
 	// When logged in to dropbox, session.linkedClient will call this
 	// function with a linked client.
 	console.log('Files in dropbox:');
-	cli.metadata('/', function (err, meta) {
+	return cli.metadata('/', function (err, meta) {
 	    for (idx in meta.contents) {
 		console.log(meta.contents[idx].path);
 	    }
