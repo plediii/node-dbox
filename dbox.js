@@ -686,11 +686,13 @@ var Credentials = exports.Credentials = function (data, source) {
 Credentials.prototype.getJSON = function (cb) {
     var that = this;
     that.getRequestToken(function (err, request) {
+	console.log('getJSON request', request);
 	if (err) {
 	    return cb(err);
 	}
 	else {
 	    that.getAccessToken(function (err, access) {
+		console.log('getJSON access', access);
 		if (err) {
 		    return cb(err);
 		}
