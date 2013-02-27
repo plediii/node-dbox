@@ -479,7 +479,8 @@ exports.app = function(config){
 		add: nop,
 		remove: nop,
 		reset: nop,
-		finished: nop
+		finished: nop,
+		error: nop
 	    };
 
 	    for (attr in defaults) {
@@ -496,10 +497,11 @@ exports.app = function(config){
 	    (function delta_loop () {
 		return cli.delta({cursor: cursor}, function (status, delta) {
 			if (status !== 200) {
-			    throw {
+			    return options.error({
 				name: 'error',
-				message: 'delta returned status ' + status
-			    };
+				message: 'delta returned status ' + status,
+				status: status
+			    });
 			}
 			
 			cursor = delta.cursor;
