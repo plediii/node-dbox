@@ -8,7 +8,7 @@ var inherits = require('util').inherits;
 var dbox = require('./dbox');
 
 var defaultTokenFile = exports.defaultTokenFile = 'token_store.json';
-var Credentials = exports.Credentials = function (credsFile) {
+var Credentials = exports.Credentials = function (credsFile, fileData) {
     if (!credsFile) {
 	credsFile = defaultTokenFile;	
     }
