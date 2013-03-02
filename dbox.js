@@ -581,14 +581,34 @@ exports.app = function(config){
 			  return go_new_client(accessToken);
 		      }
 		      else {
-			  
-			  var go_login = function () {
+
+			  var go_request_token = function () {
 			      return app.requesttoken(function (status, requestToken) {
 				  creds.setRequestToken(requestToken, function (err) {
 				      if (err) {
 					  return on_err(err);
 				      }
-				      return login_required(requestToken.authorize_url);
+				      return login_required(requestToken.authorize_url, function retry () {
+					  return go_access_token(requestToken);
+				      });
+				  });
+			      });
+			  };
+
+
+			  var go_access_token = function (requestToken) {
+			      return app.accesstoken(requestToken, function (status, accessToken) {
+
+				  // is there an error status
+				  // which would suggest we
+				  // shouldn't just get a new
+				  // request token?
+
+				  if (status !== 200) {
+				      return go_request_token();
+				  }
+				  return creds.setAccessToken(accessToken, function () {
+				      go_new_client(accessToken);
 				  });
 			      });
 			  };
@@ -598,23 +618,11 @@ exports.app = function(config){
 				  return on_err(err);
 			      }
 			      if (requestToken) {
-				  return app.accesstoken(requestToken, function (status, accessToken) {
+				  return go_access_token(requestToken);
 
-				      // is there an error status
-				      // which would suggest we
-				      // shouldn't just get a new
-				      // request token?
-
-				      if (status !== 200) {
-					  return go_login();
-				      }
-				      return creds.setAccessToken(accessToken, function () {
-					  go_new_client(accessToken);
-				      });
-				  });
 			      }
 			      else {
-				  return go_login();
+				  return go_request_token();
 			      }
 			  });
 		      }
