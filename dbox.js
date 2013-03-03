@@ -509,8 +509,6 @@ exports.app = function(config){
 			if (delta.reset) {
 			    options.reset();
 			}
-			
-			var cb;
 
 			var delta_list = delta.entries;
 			delta_list.reverse();
