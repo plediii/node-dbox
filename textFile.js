@@ -8,11 +8,12 @@ var inherits = require('util').inherits;
 var dbox = require('./dbox');
 
 var defaultTokenFile = exports.defaultTokenFile = 'token_store.json';
-var Credentials = exports.Credentials = function (credsFile, fileData) {
+var Credentials = exports.Credentials = function (credsFile) {
     if (!credsFile) {
 	credsFile = defaultTokenFile;	
     }
-    
+
+    var fileData;
     try {
 	// read old credentials from file if possible.
 	fileData = JSON.parse(fs.readFileSync(credsFile));
