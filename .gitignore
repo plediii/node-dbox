@@ -6,3 +6,4 @@ tmp
 *.swp
 *.*~
 .c9revisions
+test/config/access_token2.json
