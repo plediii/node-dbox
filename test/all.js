@@ -184,19 +184,20 @@ describe("metadata", function(){
 
 	for (var path in files) {
 	    files[path].should.eql(metadata.file(path));
+	    files[path].should.not.have.property('contents');
 	}
     };
 
     var uploadFile = function (client, path, cb) {
 	return random_string(function (content) {
-	    client.put(path, content, function (err) {
+	    return client.put(path, content, function (err) {
 		return cb(err, content)
 	    });
 	});
     };
 
     var uploadRandomFile = function (client, cb) {
-	random_string(function (fileName) {
+	return random_string(function (fileName) {
 	    var testPath = '/' + fileName;
 	    return uploadFile(client, testPath, function (err, content) {
 		return cb(err, testPath, content);
@@ -210,10 +211,19 @@ describe("metadata", function(){
 
 
     var setUpdate = function (set) {
+	set.should.be.a('object');
 	return function (client, metadata, cb) {
 	    return metadata.update(client, set, cb);
 	};
     };
+
+    var pathUpdate = function (path) {
+	path.should.be.a('string');
+	return function (client, metadata, cb) {
+	    return metadata.update(client, path, cb);
+	};
+    };
+
 
     var nonUpdate = setUpdate({});
 
@@ -238,12 +248,9 @@ describe("metadata", function(){
 	}
 	var go_test = function (path)  {
 	    var before = metadata.file(path);
-	    return options.change(path, function (err) {
-		err.should.not.exist;
-	    });
-	    options.change(client, path, function (err) {
-		err.should.not.exist;
-		options.update(client, metadata, function (err) {
+	    return options.change(client, path, function (err) {
+		should.not.exist(err);
+		return options.update(client, metadata, function (err) {
 		    err.should.not.exist;
 		    testFilesEqualFiles();
 		    var after = metadata.file(path);
@@ -280,6 +287,24 @@ describe("metadata", function(){
 	});
     });
 
+    it("should update file list to complete file list on root pathUpdate", function(done) { 
+	var metadata = newMetadata();
+
+	return testUpdate(client, metadata, {
+	    update: pathUpdate('/'),
+	    expect: function (before, after) {
+
+		var metas = metadata.files();
+		client.readdir('/', function (status, files) {
+		    status.should.not.exist;
+		    files.should.have.length.above(0); // we can't really test anything unless we have some files
+		    compareSetArray(metas, files);
+		    return done();
+		});
+	    }
+	});
+    });
+
 
     it("should not update file list to complete file list on empty update", function(done) { 
 	var metadata = newMetadata();
@@ -295,8 +320,7 @@ describe("metadata", function(){
 
 
     it("should update specific changed file with full update after upload, change and removal", function(done) { 
-	var metadata = app.metadata();
-	metadata.should.exist;
+	var metadata = newMetadata();
 	
 	return testUpdate(client, metadata, {
 	    update: fullUpdate,
@@ -316,6 +340,7 @@ describe("metadata", function(){
 			    expect: function (beforeRm, afterRm) {
 				beforeRm.should.eql(after2);
 				afterRm.should.not.exist;
+				metadata.files().should.have.ownProperty(after.path);
 				return done();
 			    }
 			});
@@ -353,21 +378,47 @@ describe("metadata", function(){
     it("should have same cursor for same dropbox state", function(done) { 
 	var metadata1 = app.metadata();
 	var metadata2 = app.metadata();
-	metadata1.should.exist;
-	metadata2.should.exist;
+	should.exist(metadata1);
+	should.exist(metadata2);
 	metadata1.should.not.be(metadata2);
 	return testUpdate(client, metadata1, {
 	    update: fullUpdate,
 	    change: noChange,
 	    expect: function (before, after) {
-		before.should.not.exist;
-		after.should.not.exist;
+		should.not.exist(before);
+		should.not.exist(after);
 		return testUpdate(client, metadata2, {
 		    update: fullUpdate,
 		    change: noChange,
 		    expect: function (before, after) {
-			before.should.not.exist;
-			after.should.not.exist;
+			should.not.exist(before);
+			should.not.exist(after);
+			getCursor(metadata1).should.equal(getCursor(metadata2));
+			return done();
+		    }
+		});
+	    }
+	})
+    });
+
+    it("should have same cursor for same dropbox state", function(done) { 
+	var metadata1 = app.metadata();
+	var metadata2 = app.metadata();
+	should.exist(metadata1);
+	should.exist(metadata2);
+	metadata1.should.not.be(metadata2);
+	return testUpdate(client, metadata1, {
+	    update: fullUpdate,
+	    change: noChange,
+	    expect: function (before, after) {
+		should.not.exist(before);
+		should.not.exist(after);
+		return testUpdate(client, metadata2, {
+		    update: fullUpdate,
+		    change: noChange,
+		    expect: function (before, after) {
+			should.not.exist(before);
+			should.not.exist(after);
 			getCursor(metadata1).should.equal(getCursor(metadata2));
 			return done();
 		    }
@@ -378,13 +429,13 @@ describe("metadata", function(){
     
     it("should be able to switch client used with metadata", function(done) { 
 	var metadata = app.metadata();
-	metadata.should.exist;
+	should.exist(metadata);
 	
 	return testUpdate(client, metadata, {
 	    update: fullUpdate,
 	    expect: function (before, after) {
-		before.should.not.exist;
-		after.should.exist;
+		should.not.exist(before);
+		should.exist(after);
 		return testUpdate(client2, metadata, {
 		    path: after.path,
 		    update: fullUpdate,
