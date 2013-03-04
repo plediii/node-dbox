@@ -642,7 +642,28 @@ exports.app = function(config){
 		  });
 	      }
 	  };
-      }
+      },
+
+      metadata: function () {
+	  return {
+	      update: function (client, arg, cb) {
+		  if (!cb) {
+		      arg = null;
+		      cb = arg;
+		  }
+		  return cb();
+	      },
+	      files: function () {
+		  return [];
+	      },
+	      file: function () {
+		  return null;
+	      },
+	      toJSON: function () {
+		  return null;
+	      },
+	  };
+      },
   };
 }
 
